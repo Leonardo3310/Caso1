@@ -1,0 +1,45 @@
+Manejo de la Concurrencia
+En este caso vamos a simular el Juego de la Vida. El juego de la vida es un autómata celular que sirve, entre otras tareas, para simular la evolución de una población a lo largo del tiempo y a partir de una situación inicial definida y de acuerdo con unas reglas de evolución precisas.
+Funcionamiento:
+En el juego original, el tablero de juego es infinito, pero para nuestro caso utilizaremos una matriz cuadrada de NxN posiciones (N es un dato de entrada). Cada celda debe aplicar las reglas de evolución de acuerdo con el estado de sus celdas vecinas en la matriz. Cada celda tiene dos estados: “viva” o “muerta” y todas evolucionan al mismo tiempo (hacia el siguiente turno) en función de los estados de las celdas vecinas (en el turno actual), siguiendo las siguientes reglas (ajustadas para estas condiciones):
+• Nace: Si una celda muerta tiene exactamente 3 celdas vecinas vivas "nace" (es decir, al turno siguiente estará viva).
+• Muere: una celda viva puede morir por uno de 2 casos:
+o Sobrepoblación: si tiene más de tres celdas vivas alrededor. o Aislamiento: si no tiene celdas vivas alrededor.
+• Vive: una celda se mantiene viva si tiene entre 1 y 3 celdas vecinas vivas a su alrededor.
+Al inicio se define el número de generaciones (turnos) que se van a simular y, en cada turno, las celdas informan a sus vecinas su estado y cada celda calcula el nuevo estado para el turno siguiente. Para ello, cada celda necesitará enviar la información de su estado a todas sus vecinas y, a su vez, recibir el estado de todas sus vecinas para actualizar el suyo propio.
+El comportamiento de cada celda se debe implementar con threads y su comunicación por medio de buzones, teniendo en cuenta las siguientes reglas:
+Todas las celdas deben evolucionar por turnos: en un momento todas las celdas se encuentran en la misma generación o turno (ninguna puede avanzar hasta que todas completen el cálculo de su estado para el turno en el que se encuentran).
+• El thread principal tendrá la responsabilidad de mostrar el resultado final de la evolución del estado de todas las celdas del tablero una vez se han simulado el número de generaciones especificadas.
+• Cada celda tendrá asociado un buzón con capacidad de x mensajes. x se calcula como el número de fila de la celda en el tablero más 1 (p.e. la celda ([3][2] tiene un buzón con capacidad de 4 mensajes).
+• Al enviar el estado a una celda vecina se debe hacer sobre el buzón del destinatario y con espera pasiva.
+• Al recibir el estado de una celda vecina, se debe hacer sobre el buzón propio con espera semi- activa. (Nota: sleep no es apropiado para espera semi-activa).
+• La comunicación con el thread principal la puede implementar como mejor lo considere, pero en el informe debe justificar su selección.
+El estado inicial se debe cargar de un archivo que se especifica por consola. El número de generaciones a simular también debe especificarse por consola. La primera línea del archivo debe especificar el número de filas (y columnas) del tablero, las siguientes líneas especifican el estado de cada celda: true significa viva, false en caso contrario. 
+
+para esta entrada:
+3 
+false true false
+true true true
+false false false
+
+debería la evolución ser de esta manera:
+
+false true false
+true true true
+false false false,
+
+true true true
+true true true
+false true false
+
+true false true
+false false false
+true true true
+
+false false false
+true false true
+true true true
+
+false false false
+true false true
+true false true
