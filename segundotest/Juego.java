@@ -14,7 +14,7 @@ public class Juego {
 
     public Juego(String archivoEstadoInicial, int numeroGeneraciones) {
         this.NUMERO_GENERACIONES = numeroGeneraciones;
-        this.barrera = new CyclicBarrier(n * n + 1);
+        //this.barrera = new CyclicBarrier(n * n + 1);
         cargarEstadoInicial(archivoEstadoInicial);
         
     }
@@ -24,7 +24,7 @@ public class Juego {
             String line = br.readLine().trim();
             n = Integer.parseInt(line); // Leer el tamaño del tablero
             tablero = new Celula[n][n];
-            CyclicBarrier barrera = new CyclicBarrier(n * n);
+            this.barrera = new CyclicBarrier(n * n +1);
     
             // Paso 1: Inicializar todas las células sin sus vecinos
             for (int i = 0; i < n; i++) {
@@ -32,6 +32,7 @@ public class Juego {
                 String[] estados = line.split(" ");
                 for (int j = 0; j < n; j++) {
                     boolean estadoInicial = Boolean.parseBoolean(estados[j]);
+                    //System.out.println(estadoInicial);
                     Buffersito miBuffer = new Buffersito(i + 1);
                     tablero[i][j] = new Celula(estadoInicial, miBuffer, barrera, this.NUMERO_GENERACIONES);
                 }
@@ -41,6 +42,7 @@ public class Juego {
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
                     ArrayList<Buffersito> buffersVecinos = obtenerBuffersVecinos(i, j);
+                    //System.out.println(tablero[i][j].estaViva());
                     tablero[i][j].agregarVecinos(buffersVecinos); // Asume que Celula tiene un método para establecer sus vecinos
                 }
             }
@@ -84,9 +86,11 @@ public class Juego {
             if (gen == 0) { // Solo iniciar los threads en la primera generación
                 for (int i = 0; i < n; i++) {
                     for (int j = 0; j < n; j++) {
+                        //System.out.println(tablero[i][j].estaViva());
                         tablero[i][j].start();
                     }
                 }
+                
             }
     
             // Esperar a que todas las células alcancen la barrera
@@ -96,7 +100,7 @@ public class Juego {
             mostrarTablero();
             
 
-            resetearBuffers();
+            //resetearBuffers();
             
             try {
                 Thread.sleep(750); // Pausa de 1 segundo entre generaciones
