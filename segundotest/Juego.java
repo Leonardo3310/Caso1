@@ -31,7 +31,7 @@ public class Juego {
 
     private void cargarEstadoInicial(String archivo) {
         try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
-            n = Integer.parseInt(br.readLine().trim()); // Lee el tamaño del tablero.
+            n = Integer.parseInt(br.readLine().trim()); // lee el tamaño del tablero
             tablero = new Celula[n][n];
             for (int i = 0; i < n; i++) {
                 String[] estados = br.readLine().trim().split(" ");
@@ -43,7 +43,7 @@ public class Juego {
             }
             imprimirTablero();
             generacionActual++;
-            // Asigna los vecinos después de inicializar todas las células.
+            // pone los vecinos despues de inicializar las celulas
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
                     tablero[i][j].setVecinos(obtenerVecinos(i, j));
@@ -81,9 +81,6 @@ public class Juego {
         for (int i = 0; i < NUMERO_GENERACIONES; i++) {
             esperarEnBarrera();
             
-            
-            
-            //esperarEnBarrera(); // Espera a que todas las células completen su generación y se imprima el tablero.
         }
         
         //esperarEnBarrera();

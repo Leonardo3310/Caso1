@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Celula implements Runnable {
     private volatile boolean estado;
-    private boolean proximoEstado; // Para almacenar el estado calculado para la próxima generación
+    private boolean proximoEstado; 
     //private final int fila, columna;
     private final Juego juego;
     private final Buzon<Boolean> buzon;
@@ -28,16 +28,16 @@ public class Celula implements Runnable {
     public void run() {
         try {
             for (int i = 0; i < juego.NUMERO_GENERACIONES; i++) {
-                // Envía el estado actual a todos los vecinos
+                // envia el estado actual a todos los vecinos
                 for (Celula vecino : vecinos) {
                     vecino.buzon.enviarMensaje(estado);
                 }
-                // Recibe el estado de todos los vecinos
+                // recibe el estado de todos los vecinos
                 List<Boolean> estadosVecinos = new ArrayList<>();
                 for (int j = 0; j < vecinos.size(); j++) {
                     estadosVecinos.add(buzon.recibirMensaje());
                 }
-                // Calcula el próximo estado basado en los estados recibidos
+                // calcula el próximo estado basado en los estados recibidos
                 proximoEstado = calcularProximoEstado(estadosVecinos);
     
                 //juego.esperarEnBarrera(); // Sincroniza después de recibir y antes de actualizar
@@ -45,7 +45,7 @@ public class Celula implements Runnable {
                 // Actualiza el estado
                 estado = proximoEstado;
     
-                juego.esperarEnBarrera(); // Sincroniza después de actualizar para asegurarse de que todas las células estén listas para la siguiente generación
+                juego.esperarEnBarrera(); // sincroniza todo después de actualizar pa ver q las celulas esten listas para la siguiente generacion
             }
         } catch (Exception e) {
             e.printStackTrace();
