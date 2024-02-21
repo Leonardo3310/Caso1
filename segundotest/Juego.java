@@ -6,141 +6,114 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.CyclicBarrier;
 
+
+
 public class Juego {
-    public int NUMERO_GENERACIONES = 5; // Definir según necesidad
+    int NUMERO_GENERACIONES;
     private Celula[][] tablero;
     private int n; // Tamaño del tablero NxN
     private CyclicBarrier barrera;
+    private int generacionActual = 0;
+    //public volatile boolean simulacionEnProgreso = true;
+
 
     public Juego(String archivoEstadoInicial, int numeroGeneraciones) {
         this.NUMERO_GENERACIONES = numeroGeneraciones;
-        //this.barrera = new CyclicBarrier(n * n + 1);
         cargarEstadoInicial(archivoEstadoInicial);
-        
+        // Se ajusta la barrera para incluir todas las células más el hilo principal que espera.
+        this.barrera = new CyclicBarrier(n * n + 1, () -> {
+            imprimirTablero();
+            generacionActual++;
+            System.out.println("Generación completada.\n");
+            
+        });
     }
 
     private void cargarEstadoInicial(String archivo) {
         try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
-            String line = br.readLine().trim();
-            n = Integer.parseInt(line); // Leer el tamaño del tablero
+            n = Integer.parseInt(br.readLine().trim()); // Lee el tamaño del tablero.
             tablero = new Celula[n][n];
-            this.barrera = new CyclicBarrier(n * n +1);
-    
-            // Paso 1: Inicializar todas las células sin sus vecinos
             for (int i = 0; i < n; i++) {
-                line = br.readLine().trim();
-                String[] estados = line.split(" ");
+                String[] estados = br.readLine().trim().split(" ");
                 for (int j = 0; j < n; j++) {
                     boolean estadoInicial = Boolean.parseBoolean(estados[j]);
-                    //System.out.println(estadoInicial);
-                    Buffersito miBuffer = new Buffersito(i + 1);
-                    tablero[i][j] = new Celula(estadoInicial, miBuffer, barrera, this.NUMERO_GENERACIONES);
+                    tablero[i][j] = new Celula(estadoInicial, i, j, this);
                 }
+                
             }
-    
-            // Paso 2: Asignar vecinos ahora que todas las células están inicializadas
+            imprimirTablero();
+            generacionActual++;
+            // Asigna los vecinos después de inicializar todas las células.
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
-                    ArrayList<Buffersito> buffersVecinos = obtenerBuffersVecinos(i, j);
-                    //System.out.println(tablero[i][j].estaViva());
-                    tablero[i][j].agregarVecinos(buffersVecinos); // Asume que Celula tiene un método para establecer sus vecinos
+                    tablero[i][j].setVecinos(obtenerVecinos(i, j));
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
 
-    private ArrayList<Buffersito> obtenerBuffersVecinos(int fila, int columna) {
-        ArrayList<Buffersito> buffers = new ArrayList<>();
-    
-        // Definir los posibles desplazamientos respecto a la posición actual
+    private ArrayList<Celula> obtenerVecinos(int fila, int columna) {
+        ArrayList<Celula> vecinos = new ArrayList<>();
         int[] desplazamientos = {-1, 0, 1};
-    
         for (int desplazamientoFila : desplazamientos) {
             for (int desplazamientoColumna : desplazamientos) {
-                // Ignorar la posición actual (0,0)
-                if (desplazamientoFila == 0 && desplazamientoColumna == 0) {
-                    continue;
-                }
-    
+                if (desplazamientoFila == 0 && desplazamientoColumna == 0) continue;
                 int vecinoFila = fila + desplazamientoFila;
                 int vecinoColumna = columna + desplazamientoColumna;
-    
-                // Verificar si la posición del vecino está dentro de los límites del tablero
-                if (vecinoFila >= 0 && vecinoFila < tablero.length && vecinoColumna >= 0 && vecinoColumna < tablero[vecinoFila].length) {
-                    // Añadir el buffer de la célula vecina a la lista
-                    buffers.add(tablero[vecinoFila][vecinoColumna].obtenerMiBuffer());
+                if (vecinoFila >= 0 && vecinoFila < n && vecinoColumna >= 0 && vecinoColumna < n) {
+                    vecinos.add(tablero[vecinoFila][vecinoColumna]);
                 }
             }
         }
-    
-        return buffers;
+        return vecinos;
     }
-    
 
     public void iniciarSimulacion() {
-        for (int gen = 0; gen < this.NUMERO_GENERACIONES; gen++) {
-            // Iniciar o reanudar todos los threads de las células
-            if (gen == 0) { // Solo iniciar los threads en la primera generación
-                for (int i = 0; i < n; i++) {
-                    for (int j = 0; j < n; j++) {
-                        //System.out.println(tablero[i][j].estaViva());
-                        tablero[i][j].start();
-                    }
-                }
-                
-            }
-    
-            // Esperar a que todas las células alcancen la barrera
-            awaitBarrier(barrera);
-    
-            // Mostrar el tablero después de que todas las células han alcanzado la barrera
-            mostrarTablero();
-            
-
-            //resetearBuffers();
-            
-            try {
-                Thread.sleep(750); // Pausa de 1 segundo entre generaciones
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                new Thread(tablero[i][j]).start();
             }
         }
+        // Este ciclo asegura que el hilo principal también espera en la barrera,
+        // permitiendo que cada generación se complete antes de continuar.
+        for (int i = 0; i < NUMERO_GENERACIONES; i++) {
+            esperarEnBarrera();
+            
+            
+            
+            //esperarEnBarrera(); // Espera a que todas las células completen su generación y se imprima el tablero.
+        }
+        
+        //esperarEnBarrera();
     }
-    
-    private void awaitBarrier(CyclicBarrier barrera) {
+
+    public void esperarEnBarrera() {
         try {
-            barrera.await(); // Esperar a que todas las células alcancen la barrera
+            barrera.await();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
-    private void resetearBuffers() {
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                tablero[i][j].obtenerMiBuffer().resetear();
-            }
-        }
-    }
 
-    public void mostrarTablero() {
-        for (int i = 0; i < tablero.length; i++) {
-            for (int j = 0; j < tablero[i].length; j++) {
-                //System.out.print(board[i][j].estaVivo());
-                System.out.print(tablero[i][j].estaViva() ? "■ " : "□ ");
+    public void imprimirTablero() {
+        System.out.println("Generación: " + generacionActual);
+        for (Celula[] fila : tablero) {
+            for (int i = 0; i < fila.length; i++) {
+                System.out.print(fila[i].estaViva() ? "■ " : "□ ");
+                
             }
-            System.out.println(); // Nueva línea al final de cada fila
+            System.out.println();
         }
-        System.out.println(); // Línea adicional para separar las generaciones
+        System.out.println();
     }
 
     public static void main(String[] args) {
-        Juego juego = new Juego(args[0], Integer.parseInt(args[1]));
-        juego.iniciarSimulacion();
-        // Llamar a mostrarTablero() después de que todas las células hayan terminado
+        if (args.length < 2) {
+            System.out.println("Uso: Juego <archivoEstadoInicial> <numeroGeneraciones>");
+            return;
+        }
+        new Juego(args[0], Integer.parseInt(args[1])-1).iniciarSimulacion();
     }
-}   
-
+}

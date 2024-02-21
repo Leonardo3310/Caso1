@@ -1,71 +1,64 @@
 package segundotest;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CyclicBarrier;
 
-public class Celula extends Thread {
-    private boolean estado; // true para viva, false para muerta
-    private List<Buffersito> buffersVecinos;
-    private final Buffersito miBuffer;
-    private final CyclicBarrier barrera;
-    public int numeroGeneraciones;
+public class Celula implements Runnable {
+    private volatile boolean estado;
+    private boolean proximoEstado; // Para almacenar el estado calculado para la próxima generación
+    private final int fila, columna;
+    private final Juego juego;
+    private final Buzon<Boolean> buzon;
+    private final List<Celula> vecinos = new ArrayList<>();
 
-    public Celula(boolean estadoInicial, Buffersito miBuffer, CyclicBarrier barrera, int numeroGeneraciones) {
+    public Celula(boolean estadoInicial, int fila, int columna, Juego juego) {
         this.estado = estadoInicial;
-        this.miBuffer = miBuffer;
-        this.barrera = barrera;
-        this.numeroGeneraciones = numeroGeneraciones;
+        this.fila = fila;
+        this.columna = columna;
+        this.juego = juego;
+        // Ajuste en la capacidad del buzón según la fila
+        this.buzon = new Buzon<>();
     }
 
-    public void agregarVecinos(List<Buffersito> buffers) {
-        this.buffersVecinos = buffers;
+    public void setVecinos(List<Celula> vecinos) {
+        this.vecinos.addAll(vecinos);
     }
 
     @Override
     public void run() {
         try {
-            for (int i = 0; i < this.numeroGeneraciones; i++) {
-                // Enviar estado actual a todos los vecinos
-                enviarEstado();
-
-                // Recibir estados de los vecinos y calcular el nuevo estado
-                boolean nuevoEstado = calcularNuevoEstado();
-                //System.out.println(nuevoEstado);
-
-                // Esperar a que todas las células completen este turno
-                barrera.await();
-
-                // Actualizar el estado para el próximo turno
-                this.estado = nuevoEstado;
+            for (int i = 0; i < juego.NUMERO_GENERACIONES; i++) {
+                // Envía el estado actual a todos los vecinos
+                for (Celula vecino : vecinos) {
+                    vecino.buzon.enviarMensaje(estado);
+                }
+                // Recibe el estado de todos los vecinos
+                List<Boolean> estadosVecinos = new ArrayList<>();
+                for (int j = 0; j < vecinos.size(); j++) {
+                    estadosVecinos.add(buzon.recibirMensaje());
+                }
+                // Calcula el próximo estado basado en los estados recibidos
+                proximoEstado = calcularProximoEstado(estadosVecinos);
+    
+                //juego.esperarEnBarrera(); // Sincroniza después de recibir y antes de actualizar
+                //if (!juego.simulacionEnProgreso) break;
+                // Actualiza el estado
+                estado = proximoEstado;
+    
+                juego.esperarEnBarrera(); // Sincroniza después de actualizar para asegurarse de que todas las células estén listas para la siguiente generación
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void enviarEstado() {
-        for (Buffersito buffer : buffersVecinos) {
-            buffer.enviar(estado);
-        }
-    }
-
-    public Buffersito obtenerMiBuffer() {
-        return miBuffer;
-    }
-
-    public boolean estaViva() {
-        return estado;
-    }
-
-    private boolean calcularNuevoEstado() {
+    private boolean calcularProximoEstado(List<Boolean> estadosVecinos) {
         int vecinosVivos = 0;
-        for (Buffersito buffer : buffersVecinos) {
-            if (buffer.recibir()) {
-                vecinosVivos++;
-            }
+        for (Boolean estadoVecino : estadosVecinos) {
+            if (estadoVecino) vecinosVivos++;
         }
-
-        // Aplicar las reglas del Juego de la Vida
+    
+        // Aplica las reglas para determinar el próximo estado
         if ((estado == false) && vecinosVivos == 3) {
             return true; // Nace
         } else if (estado && (vecinosVivos == 0 || vecinosVivos > 3)) {
@@ -74,5 +67,8 @@ public class Celula extends Thread {
             return estado; // Permanece en el estado actual
         }
     }
-}
 
+    public boolean estaViva() {
+        return estado;
+    }
+}
