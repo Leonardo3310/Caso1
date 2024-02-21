@@ -42,6 +42,7 @@ public class Juego {
                 
             }
             imprimirTablero();
+            System.out.println("Generación inicial completada.\n ");
             generacionActual++;
             // pone los vecinos despues de inicializar las celulas
             for (int i = 0; i < n; i++) {
