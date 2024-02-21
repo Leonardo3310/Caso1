@@ -20,7 +20,7 @@ public class Juego {
     public Juego(String archivoEstadoInicial, int numeroGeneraciones) {
         this.NUMERO_GENERACIONES = numeroGeneraciones;
         cargarEstadoInicial(archivoEstadoInicial);
-        // Se ajusta la barrera para incluir todas las células más el hilo principal que espera.
+        
         this.barrera = new CyclicBarrier(n * n + 1, () -> {
             imprimirTablero();
             generacionActual++;
