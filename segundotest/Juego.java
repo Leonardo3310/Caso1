@@ -8,9 +8,10 @@ import java.util.concurrent.CyclicBarrier;
 
 public class Juego {
     public int NUMERO_GENERACIONES = 5; // Definir según necesidad
-    private Celula[][] tablero;
+    public static boolean[][] matriz;
+    public static Buffersito [][] buzones;
     private int n; // Tamaño del tablero NxN
-    private CyclicBarrier barrera;
+    public static CyclicBarrier barrera;
 
     public Juego(String archivoEstadoInicial, int numeroGeneraciones) {
         this.NUMERO_GENERACIONES = numeroGeneraciones;
@@ -24,7 +25,7 @@ public class Juego {
             String line = br.readLine().trim();
             n = Integer.parseInt(line); // Leer el tamaño del tablero
             tablero = new Celula[n][n];
-            this.barrera = new CyclicBarrier(n * n +1);
+            //this.barrera = new CyclicBarrier(n * n *2);
     
             // Paso 1: Inicializar todas las células sin sus vecinos
             for (int i = 0; i < n; i++) {
@@ -138,7 +139,9 @@ public class Juego {
     }
 
     public static void main(String[] args) {
+        barrera = new CyclicBarrier(Integer.parseInt(args[1]) * Integer.parseInt(args[1]) *2);
         Juego juego = new Juego(args[0], Integer.parseInt(args[1]));
+        System.out.println("Generacion 0");
         juego.iniciarSimulacion();
         // Llamar a mostrarTablero() después de que todas las células hayan terminado
     }

@@ -3,22 +3,43 @@ package segundotest;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 
-public class Celula extends Thread {
+public class CelulaConsumidora extends Thread {
     private boolean estado; // true para viva, false para muerta
-    private List<Buffersito> buffersVecinos;
-    private final Buffersito miBuffer;
-    private final CyclicBarrier barrera;
+    //private List<Buffersito> buffersVecinos;
+    private  Buffersito miBuffer;
+    private final CyclicBarrier barrera1;
+    private final CyclicBarrier barrera2;
     public int numeroGeneraciones;
+    public int posicionx;
+    public int posiciony;
 
-    public Celula(boolean estadoInicial, Buffersito miBuffer, CyclicBarrier barrera, int numeroGeneraciones) {
-        this.estado = estadoInicial;
+    public int vecinos;
+
+    public int vecinoVivitosYColeando;;
+   
+
+    public CelulaConsumidora(Buffersito miBuffer, CyclicBarrier barrera1, CyclicBarrier barrera2,
+     int numeroGeneraciones, int x, int y) {
+        //this.estado = estadoInicial;
         this.miBuffer = miBuffer;
-        this.barrera = barrera;
+        this.barrera1 = barrera1;
+        this.barrera2 = barrera2;
         this.numeroGeneraciones = numeroGeneraciones;
+        this.posicionx = x;
+        this.posiciony = y;
     }
 
-    public void agregarVecinos(List<Buffersito> buffers) {
-        this.buffersVecinos = buffers;
+    private boolean recibirEstado(Buffersito vecino){
+        try {
+            boolean estadoVecino = vecino.recibir();
+            if(estadoVecino == true){
+                vecinoVivitosYColeando++;
+            }
+            return true;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override
@@ -26,14 +47,17 @@ public class Celula extends Thread {
         try {
             for (int i = 0; i < this.numeroGeneraciones; i++) {
                 // Enviar estado actual a todos los vecinos
-                enviarEstado();
+                Juego.barrera.await();
 
+                vecinoVivitosYColeando = 0;
+                int x = 0;
+                boolean condicion = true;
                 // Recibir estados de los vecinos y calcular el nuevo estado
                 boolean nuevoEstado = calcularNuevoEstado();
                 //System.out.println(nuevoEstado);
 
                 // Esperar a que todas las células completen este turno
-                barrera.await();
+                
 
                 // Actualizar el estado para el próximo turno
                 this.estado = nuevoEstado;
@@ -57,9 +81,10 @@ public class Celula extends Thread {
         return estado;
     }
 
-    private boolean calcularNuevoEstado() {
+    private boolean calcularNuevoEstado() throws InterruptedException {
         int vecinosVivos = 0;
         for (Buffersito buffer : buffersVecinos) {
+            //System.out.println(buffer.recibir());
             if (buffer.recibir()) {
                 vecinosVivos++;
             }
