@@ -37,7 +37,7 @@ public class Juego {
                 String[] estados = br.readLine().trim().split(" ");
                 for (int j = 0; j < n; j++) {
                     boolean estadoInicial = Boolean.parseBoolean(estados[j]);
-                    tablero[i][j] = new Celula(estadoInicial, i, j, this);
+                    tablero[i][j] = new Celula(estadoInicial, this);
                 }
                 
             }
