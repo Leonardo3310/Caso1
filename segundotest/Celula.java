@@ -6,15 +6,15 @@ import java.util.List;
 public class Celula implements Runnable {
     private volatile boolean estado;
     private boolean proximoEstado; // Para almacenar el estado calculado para la próxima generación
-    private final int fila, columna;
+    //private final int fila, columna;
     private final Juego juego;
     private final Buzon<Boolean> buzon;
     private final List<Celula> vecinos = new ArrayList<>();
 
-    public Celula(boolean estadoInicial, int fila, int columna, Juego juego) {
+    public Celula(boolean estadoInicial, Juego juego) {
         this.estado = estadoInicial;
-        this.fila = fila;
-        this.columna = columna;
+        //this.fila = fila;
+        //this.columna = columna;
         this.juego = juego;
         // Ajuste en la capacidad del buzón según la fila
         this.buzon = new Buzon<>();
